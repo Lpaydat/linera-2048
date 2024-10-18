@@ -71,7 +71,7 @@
 <main>
   <div class="header">
     <h1 class="title">2048</h1>
-    <span class="credits">made with <span class="heart">❤️</span>, lpaydat</span>
+    <span class="credits">made with <span class="heart">❤️</span> lpaydat</span>
   </div>
   <div class="game-container">
     <Game />

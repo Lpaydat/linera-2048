@@ -35,7 +35,7 @@
   `;
 
   let client = getContextClient();
-  let gameId = 5;
+  let gameId = 7;
 
   const game = queryStore({
     client,
@@ -93,10 +93,6 @@
     newGame();
   });
 
-  const handleKeydown = (event: KeyboardEvent) => {
-    makeMoveMutation({ gameId, direction: event.key });
-  };
-
   let blockHeight = 0;
   $: bh = $messages.data?.notifications?.reason?.NewBlock?.height;
 
@@ -117,6 +113,25 @@
     logs = [ { hash: lastHash, timestamp: new Date().toISOString() }, ...logs];
   }
 
+  // Function to check if any tile on the board has reached 2048
+  const hasWon = (board: number[][]) => {
+    return board.some(row => row.includes(11));
+  };
+
+  const handleKeydown = (event: KeyboardEvent) => {
+    if ($game.data?.game?.isEnded) {
+      return;
+    }
+    makeMoveMutation({ gameId, direction: event.key });
+  };
+
+  // Function to get the overlay message based on game status
+  const getOverlayMessage = (board: number[][]) => {
+    if (hasWon(board)) {
+      return "Congratulations! You Won!";
+    }
+    return "Game Over! You Lost!";
+  };
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -128,6 +143,11 @@
   {:else}
     <div class="game-board">
       <Board board={$game.data?.game?.board} />
+      {#if $game.data?.game?.isEnded}
+        <div class="overlay">
+          <p>{getOverlayMessage($game.data?.game?.board)}</p>
+        </div>
+      {/if}
     </div>
   {/if}
 </div>
@@ -142,8 +162,24 @@
   }
 
   .game-board {
+    position: relative;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 5px;
+  }
+
+  .overlay {
+    position: absolute;
+    font-weight: bold;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 6px;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
   }
 </style>
