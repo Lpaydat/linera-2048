@@ -1,4 +1,4 @@
-use game2048::{gen_range, Direction, ROW_MASK};
+use crate::{gen_range, Direction, ROW_MASK};
 use lazy_static::lazy_static;
 use std::ops::Add;
 include!("../moves_data.rs");
@@ -125,6 +125,91 @@ impl Game {
         }
 
         current_board
+    }
+
+    /// Converts a 64-bit board representation to a 4x4 matrix of u16 values.
+    ///
+    /// This function takes a u64 board representation where each 4 bits represent
+    /// a tile value, and converts it into a 2D array (matrix) of u16 values.
+    ///
+    /// # Arguments
+    ///
+    /// * `board` - A u64 representing the game board, where each 4 bits encode a tile.
+    ///
+    /// # Returns
+    ///
+    /// A 4x4 array of u16 values, where each value represents the actual tile value.
+    /// For example, a value of 3 represents 2^3 = 8.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let board = 0x0000_0000_0022_1100; // represents a board with 1, 1, 2, 2 in the bottom two rows
+    /// let matrix = Game::convert_to_matrix(board);
+    /// assert_eq!(matrix, [
+    ///     [0, 0, 0, 0],
+    ///     [0, 0, 0, 0],
+    ///     [0, 0, 2, 2],
+    ///     [1, 1, 0, 0]
+    /// ]);
+    /// ```
+    pub fn convert_to_matrix(board: u64) -> [[u16; 4]; 4] {
+        let mut matrix = [[0u16; 4]; 4];
+        for i in 0..16 {
+            let value = ((board >> (i * 4)) & 0xF) as u8;
+            // Correct the indexing to avoid swapping left and right
+            matrix[3 - (i / 4)][3 - (i % 4)] = if value > 0 { value.into() } else { 0 };
+        }
+        matrix
+    }
+
+    /// Determines if the game has ended.
+    ///
+    /// The game is considered ended if:
+    /// 1. Any tile on the board has reached the value of 2048.
+    /// 2. No moves in any direction (left, right, up, down) result in a change in the board.
+    ///
+    /// # Arguments
+    ///
+    /// * `board` - A `u64` representing the current state of the game board.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if the game is ended, either by reaching 2048 or having no possible moves left.
+    /// * `false` otherwise.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tfe::Game;
+    ///
+    /// let board = 0x0000_0000_0000_0B00; // A board with a tile value of 2048
+    /// assert!(Game::is_ended(board)); // Game should be ended
+    ///
+    /// let board = 0x0000_0000_0000_0000; // An empty board
+    /// assert!(!Game::is_ended(board)); // Game should not be ended
+    /// ```
+    pub fn is_ended(board: u64) -> bool {
+        // Check if any tile has reached 2048
+        for i in 0..16 {
+            let tile_value = (board >> (i * 4)) & 0xF;
+            if tile_value == 11 {
+                // 2^11 = 2048
+                return true;
+            }
+        }
+
+        // Check if any move changes the board
+        let left = Self::move_left(board);
+        let right = Self::move_right(board);
+        let up = Self::move_up(board);
+        let down = Self::move_down(board);
+
+        if board == left && board == right && board == up && board == down {
+            return true;
+        }
+
+        false
     }
 
     /// Returns a transposed board where rows are transformed into columns and vice versa.

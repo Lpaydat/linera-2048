@@ -1,11 +1,10 @@
 #![cfg_attr(target_arch = "wasm32", no_main)]
 
-mod game;
+// mod game;
 mod state;
 
 use std::str::FromStr;
 
-use crate::game::Game;
 use linera_sdk::{
     base::{ChainId, WithContractAbi},
     views::{RootView, View},
@@ -13,7 +12,7 @@ use linera_sdk::{
 };
 
 use self::state::Game2048;
-use game2048::{gen_range, Message, Operation};
+use game2048::{gen_range, Game, Message, Operation};
 
 pub struct Game2048Contract {
     state: Game2048,
@@ -58,7 +57,7 @@ impl Contract for Game2048Contract {
 
     async fn execute_operation(&mut self, operation: Self::Operation) -> Self::Response {
         match operation {
-            Operation::StartGame { seed } => {
+            Operation::NewGame { seed } => {
                 let seed = self.get_seed(seed);
                 let new_board = Game::new(seed).board;
                 let game = self.state.games.load_entry_mut(&seed).await.unwrap();
@@ -75,15 +74,16 @@ impl Contract for Game2048Contract {
             Operation::MakeMove { game_id, direction } => {
                 let seed = self.get_seed(0);
                 let board = self.state.games.load_entry_mut(&game_id).await.unwrap();
-                let mut game = Game {
-                    board: *board.board.get(),
-                    seed,
-                };
 
-                let is_ended = Game::count_empty(game.board) == 0;
+                let is_ended = board.is_ended.get();
                 if !is_ended {
+                    let mut game = Game {
+                        board: *board.board.get(),
+                        seed,
+                    };
+
                     let new_board = Game::execute(&mut game, direction);
-                    let is_ended = Game::count_empty(new_board) == 0;
+                    let is_ended = Game::is_ended(new_board);
                     let score = Game::score(new_board);
 
                     board.board.set(new_board);
