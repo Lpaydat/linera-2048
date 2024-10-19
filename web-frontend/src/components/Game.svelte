@@ -5,6 +5,7 @@
   import { onMount } from "svelte";
   import Board from './Board.svelte';
   import MoveLogs from './MoveLogs.svelte';
+  import Introduction from './Introduction.svelte';
 
   // GraphQL queries, mutations, and subscriptions
   const GET_GAME_STATE = gql`
@@ -89,17 +90,20 @@
   // Game initialization and lifecycle
   const newGame = () => {
     gameId = Math.floor(Math.random() * 65536) + 1;
+    logs = []
     newGameMutation({ seed: gameId });
   };
 
   onMount(() => {
-    newGame();
+    setTimeout(() => {
+      newGame();
+    }, 50);
   });
 
   // Reactive statements for block height and rendering
   let blockHeight = 0;
   $: bh = $messages.data?.notifications?.reason?.NewBlock?.height;
-  $: if (bh !== blockHeight) {
+  $: if (bh && bh !== blockHeight) {
     blockHeight = bh;
     game.reexecute({ requestPolicy: 'network-only' });
   }
@@ -129,6 +133,8 @@
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
+
+<Introduction />
 
 <div class="game-container">
   <Header value={$game.data?.game?.score || 0} on:click={newGame} />
