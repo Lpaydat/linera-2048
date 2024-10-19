@@ -15,7 +15,7 @@ scalar!(GameStatus);
 #[derive(View, SimpleObject)]
 #[view(context = "ViewStorageContext")]
 pub struct GameState {
-    pub game_id: RegisterView<u32>,
+    pub game_id: RegisterView<u16>,
     pub board: RegisterView<u64>,
     pub score: RegisterView<u64>,
     pub is_ended: RegisterView<bool>,
@@ -24,6 +24,6 @@ pub struct GameState {
 #[derive(RootView, SimpleObject)]
 #[view(context = "ViewStorageContext")]
 pub struct Game2048 {
-    pub games: CollectionView<u32, GameState>,
+    pub games: CollectionView<u16, GameState>,
     // leaderboard
 }

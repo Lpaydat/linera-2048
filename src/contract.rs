@@ -28,7 +28,7 @@ impl WithContractAbi for Game2048Contract {
 impl Contract for Game2048Contract {
     type Message = Message;
     type Parameters = ();
-    type InstantiationArgument = u32;
+    type InstantiationArgument = u16;
 
     async fn load(runtime: ContractRuntime<Self>) -> Self {
         let state = Game2048::load(runtime.root_view_storage_context())
@@ -98,10 +98,7 @@ impl Contract for Game2048Contract {
         }
     }
 
-    async fn execute_message(&mut self, message: Self::Message) {
-        log::info!("ChainId: {:?}", self.runtime.chain_id());
-        log::info!("Message: {:?}", message);
-    }
+    async fn execute_message(&mut self, _message: Self::Message) {}
 
     async fn store(mut self) {
         self.state.save().await.expect("Failed to save state");
@@ -109,16 +106,16 @@ impl Contract for Game2048Contract {
 }
 
 impl Game2048Contract {
-    fn get_seed(&mut self, init_seed: u32) -> u32 {
+    fn get_seed(&mut self, init_seed: u16) -> u16 {
         if init_seed != 0 {
             init_seed
         } else {
             let block_height = self.runtime.block_height().to_string();
-            gen_range(&block_height, 0, u32::MAX)
+            gen_range(&block_height, 0, u16::MAX)
         }
     }
 
-    fn send_message(&mut self, game_id: u32, board: u64, score: u64, is_ended: bool) {
+    fn send_message(&mut self, game_id: u16, board: u64, score: u64, is_ended: bool) {
         let chain_id =
             ChainId::from_str("256e1dbc00482ddd619c293cc0df94d366afe7980022bb22d99e33036fd465dd")
                 .unwrap();

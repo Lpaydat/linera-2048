@@ -1,6 +1,7 @@
 {
   "name": "game2048",
   "private": true,
+  "author": "lpaydat <lpaydat@gmail.com>",
   "version": "0.0.0",
   "type": "module",
   "scripts": {

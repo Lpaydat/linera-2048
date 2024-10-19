@@ -48,7 +48,7 @@ lazy_static! {
 /// back into the board at the right position is the output board.
 pub struct Game {
     pub board: u64,
-    pub seed: u32,
+    pub seed: u16,
 }
 impl Game {
     /// Constructs a new `tfe::Game`.
@@ -74,7 +74,7 @@ impl Game {
     /// let mut game = Game::new();
     /// println!("{:016x}", game.board);
     /// ```
-    pub fn new(seed: u32) -> Self {
+    pub fn new(seed: u16) -> Self {
         let mut game = Game {
             board: 0x0000_0000_0000_0000_u64,
             seed,
@@ -368,7 +368,7 @@ impl Game {
     ///
     /// assert_eq!(result, 12);
     /// ```
-    pub fn count_empty(board: u64) -> u32 {
+    pub fn count_empty(board: u64) -> u16 {
         let mut empty = 0;
 
         for i in 0..16 {
@@ -395,7 +395,7 @@ impl Game {
     }
 
     /// Returns a `2` with 90% chance and `4` with 10% chance.
-    pub fn tile(seed: u32) -> u64 {
+    pub fn tile(seed: u16) -> u64 {
         if gen_range(&seed.to_string(), 0, 10) == 10 {
             2
         } else {
@@ -404,7 +404,7 @@ impl Game {
     }
 
     /// Returns a `1` shifted to the position of any `0` bit in `board` randomly.
-    pub fn spawn_tile(board: u64, seed: u32) -> u64 {
+    pub fn spawn_tile(board: u64, seed: u16) -> u64 {
         let mut tmp = board;
         let mut idx = gen_range(&seed.to_string(), 0, Self::count_empty(board));
         let mut t = Self::tile(seed);

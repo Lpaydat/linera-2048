@@ -15,10 +15,8 @@ export const getClient = (chainId: string, applicationId: string, port: string) 
       subscriptionExchange({
         forwardSubscription(request) {
           const input = { ...request, query: request.query || "" };
-          console.log("---request", request);
           return {
             subscribe(sink) {
-              console.log("---input", input);
               const unsubscribe = wsClient.subscribe(input, sink);
               return { unsubscribe };
             },

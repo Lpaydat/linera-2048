@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { queryStore, mutationStore, subscriptionStore, gql, getContextClient, cacheExchange, fetchExchange } from '@urql/svelte';
+  // Import necessary modules and components
+  import { queryStore, mutationStore, subscriptionStore, gql, getContextClient } from '@urql/svelte';
   import Header from "./Header.svelte";
   import { onMount } from "svelte";
   import Board from './Board.svelte';
   import MoveLogs from './MoveLogs.svelte';
 
+  // GraphQL queries, mutations, and subscriptions
   const GET_GAME_STATE = gql`
     query GetGameState($gameId: Int!) {
       game(gameId: $gameId) {
@@ -12,7 +14,7 @@
         board
         score
         isEnded
-  }
+      }
     }
   `;
 
@@ -34,24 +36,19 @@
     }
   `;
 
+  // Initialize client and game state
   let client = getContextClient();
-  let gameId = 7;
+  let gameId = 0;
 
-  const game = queryStore({
+  // Reactive statement for game state
+  $: game = queryStore({
     client,
     query: GET_GAME_STATE,
     variables: { gameId },
     requestPolicy: 'network-only',
   });
 
-  const newGameMutation = ({ seed }: {seed: number}) => {
-    mutationStore({
-      client,
-      query: NEW_GAME,
-      variables: { seed },
-    })
-  }
-
+  // Enum for move directions
   enum Direction {
     Up = "Up",
     Down = "Down",
@@ -59,33 +56,39 @@
     Right = "Right"
   }
 
-  const makeMoveMutation = ({ gameId, direction }: {gameId: number, direction: string}) => {
-    // Extract the direction part from the input (e.g., "ArrowUp" -> "Up")
+  // Mutation functions
+  const newGameMutation = ({ seed }: { seed: number }) => {
+    mutationStore({
+      client,
+      query: NEW_GAME,
+      variables: { seed },
+    });
+  };
+
+  const makeMoveMutation = ({ gameId, direction }: { gameId: number, direction: string }) => {
     const formattedDirection = direction.replace('Arrow', '');
-    
     if (!Object.values(Direction).includes(formattedDirection as Direction)) {
       console.error('Invalid direction:', direction);
       return;
     }
-    
     mutationStore({
       client,
       query: MAKE_MOVE,
       variables: { gameId, direction: formattedDirection },
-    })
-  }
+    });
+  };
 
+  // Subscription for notifications
   const subscriptionId = '256e1dbc00482ddd619c293cc0df94d366afe7980022bb22d99e33036fd465dd';
-
   const messages = subscriptionStore({
     client,
     query: NOTIFICATION_SUBSCRIPTION,
     variables: { chainId: subscriptionId },
-  })
+  });
 
-
-
+  // Game initialization and lifecycle
   const newGame = () => {
+    gameId = Math.floor(Math.random() * 65536) + 1;
     newGameMutation({ seed: gameId });
   };
 
@@ -93,9 +96,9 @@
     newGame();
   });
 
+  // Reactive statements for block height and rendering
   let blockHeight = 0;
   $: bh = $messages.data?.notifications?.reason?.NewBlock?.height;
-
   $: if (bh !== blockHeight) {
     blockHeight = bh;
     game.reexecute({ requestPolicy: 'network-only' });
@@ -106,41 +109,30 @@
     rendered = true;
   }
 
+  // Logs for move history
   let logs: { hash: string, timestamp: string }[] = [];
-  let lastHash = ''
+  let lastHash = '';
   $: if ($messages.data?.notifications?.reason?.NewBlock?.hash && lastHash !== $messages.data.notifications.reason.NewBlock.hash) {
     lastHash = $messages.data.notifications.reason.NewBlock.hash;
-    logs = [ { hash: lastHash, timestamp: new Date().toISOString() }, ...logs];
+    logs = [{ hash: lastHash, timestamp: new Date().toISOString() }, ...logs];
   }
 
-  // Function to check if any tile on the board has reached 2048
-  const hasWon = (board: number[][]) => {
-    return board.some(row => row.includes(11));
-  };
+  // Utility functions
+  const hasWon = (board: number[][]) => board.some(row => row.includes(11));
 
   const handleKeydown = (event: KeyboardEvent) => {
-    if ($game.data?.game?.isEnded) {
-      return;
-    }
+    if ($game.data?.game?.isEnded) return;
     makeMoveMutation({ gameId, direction: event.key });
   };
 
-  // Function to get the overlay message based on game status
-  const getOverlayMessage = (board: number[][]) => {
-    if (hasWon(board)) {
-      return "Congratulations! You Won!";
-    }
-    return "Game Over! You Lost!";
-  };
+  const getOverlayMessage = (board: number[][]) => hasWon(board) ? "Congratulations! You Won!" : "Game Over! You Lost!";
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="game-container">
   <Header value={$game.data?.game?.score || 0} on:click={newGame} />
-  {#if $game.fetching && !rendered}
-    <p>Loading...</p>
-  {:else}
+  {#if $game.data?.game}
     <div class="game-board">
       <Board board={$game.data?.game?.board} />
       {#if $game.data?.game?.isEnded}
@@ -149,6 +141,8 @@
         </div>
       {/if}
     </div>
+  {:else}
+    <Board board={[[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]} />
   {/if}
 </div>
 

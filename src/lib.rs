@@ -28,15 +28,15 @@ impl ServiceAbi for Game2048Abi {
 
 #[derive(Debug, Deserialize, Serialize, GraphQLMutationRoot)]
 pub enum Operation {
-    NewGame { seed: u32 },
-    EndGame { game_id: u32 },
-    MakeMove { game_id: u32, direction: Direction },
+    NewGame { seed: u16 },
+    EndGame { game_id: u16 },
+    MakeMove { game_id: u16, direction: Direction },
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum Message {
     Game {
-        game_id: u32,
+        game_id: u16,
         board: u64,
         score: u64,
         is_ended: bool,
