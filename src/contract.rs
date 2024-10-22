@@ -57,7 +57,10 @@ impl Contract for Game2048Contract {
 
     async fn execute_operation(&mut self, operation: Self::Operation) -> Self::Response {
         match operation {
-            Operation::NewGame { seed } => {
+            Operation::NewGame {
+                seed,
+                subscription_id,
+            } => {
                 let seed = self.get_seed(seed);
                 let new_board = Game::new(seed).board;
                 let game = self.state.games.load_entry_mut(&seed).await.unwrap();
@@ -65,13 +68,17 @@ impl Contract for Game2048Contract {
                 game.game_id.set(seed);
                 game.board.set(new_board);
 
-                self.send_message(seed, new_board, 0, false);
+                self.send_message(&subscription_id, seed, new_board, 0, false);
             }
             Operation::EndGame { game_id } => {
                 let board = self.state.games.load_entry_mut(&game_id).await.unwrap();
                 board.is_ended.set(true);
             }
-            Operation::MakeMove { game_id, direction } => {
+            Operation::MakeMove {
+                game_id,
+                direction,
+                subscription_id,
+            } => {
                 let seed = self.get_seed(0);
                 let board = self.state.games.load_entry_mut(&game_id).await.unwrap();
 
@@ -92,7 +99,7 @@ impl Contract for Game2048Contract {
                         board.is_ended.set(true);
                     }
 
-                    self.send_message(game_id, new_board, score, is_ended);
+                    self.send_message(&subscription_id, game_id, new_board, score, is_ended);
                 }
             }
         }
@@ -115,10 +122,15 @@ impl Game2048Contract {
         }
     }
 
-    fn send_message(&mut self, game_id: u16, board: u64, score: u64, is_ended: bool) {
-        let chain_id =
-            ChainId::from_str("256e1dbc00482ddd619c293cc0df94d366afe7980022bb22d99e33036fd465dd")
-                .unwrap();
+    fn send_message(
+        &mut self,
+        chain_id: &str,
+        game_id: u16,
+        board: u64,
+        score: u64,
+        is_ended: bool,
+    ) {
+        let chain_id = ChainId::from_str(chain_id).unwrap();
         self.runtime
             .prepare_message(Message::Game {
                 game_id,

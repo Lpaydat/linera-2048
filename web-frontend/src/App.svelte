@@ -1,7 +1,7 @@
 <script lang="ts">
-  const chainId = 'e476187f6ddfeb9d588c7b45d3df334d5501d6499b3f9ad5595cae86cce16a65';
-  const applicationId = 'c10aebc7f0e362a1cf7872096810467ea10abef0345ed6146a9cea58a46c999fa5f66bf0ead0fcb0558c6849a6e53731b9a14578cb3c2134fd593514bae63891e476187f6ddfeb9d588c7b45d3df334d5501d6499b3f9ad5595cae86cce16a65df0000000000000000000000';
-  const port = '8080';
+  const chainId = import.meta.env.VITE_CHAIN_ID;
+  const applicationId = import.meta.env.VITE_APPLICATION_ID;
+  const port = import.meta.env.VITE_PORT;
 
   import { setContextClient } from '@urql/svelte';
   import { getClient } from './lib/client';

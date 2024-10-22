@@ -6,6 +6,7 @@
   import Board from './Board.svelte';
   import MoveLogs from './MoveLogs.svelte';
   import Introduction from './Introduction.svelte';
+  import { getSubscriptionId } from '../lib/getSubscriptionId';
 
   // GraphQL queries, mutations, and subscriptions
   const GET_GAME_STATE = gql`
@@ -20,14 +21,14 @@
   `;
 
   const NEW_GAME = gql`
-    mutation NewGame($seed: Int!) {
-      newGame(seed: $seed)
+    mutation NewGame($seed: Int!, $subscriptionId: String!) {
+      newGame(seed: $seed, subscriptionId: $subscriptionId)
     }
   `;
 
   const MAKE_MOVE = gql`
-    mutation MakeMove($gameId: ID!, $direction: String!) {
-      makeMove(gameId: $gameId, direction: $direction)
+    mutation MakeMove($gameId: ID!, $direction: String!, $subscriptionId: String!) {
+      makeMove(gameId: $gameId, direction: $direction, subscriptionId: $subscriptionId)
     }
   `;
 
@@ -40,6 +41,7 @@
   // Initialize client and game state
   let client = getContextClient();
   let gameId = 0;
+  let subscriptionId = getSubscriptionId();
 
   // Reactive statement for game state
   $: game = queryStore({
@@ -62,7 +64,7 @@
     mutationStore({
       client,
       query: NEW_GAME,
-      variables: { seed },
+      variables: { seed, subscriptionId },
     });
   };
 
@@ -75,12 +77,11 @@
     mutationStore({
       client,
       query: MAKE_MOVE,
-      variables: { gameId, direction: formattedDirection },
+      variables: { gameId, direction: formattedDirection, subscriptionId },
     });
   };
 
   // Subscription for notifications
-  const subscriptionId = '256e1dbc00482ddd619c293cc0df94d366afe7980022bb22d99e33036fd465dd';
   const messages = subscriptionStore({
     client,
     query: NOTIFICATION_SUBSCRIPTION,
@@ -116,7 +117,11 @@
   // Logs for move history
   let logs: { hash: string, timestamp: string }[] = [];
   let lastHash = '';
-  $: if ($messages.data?.notifications?.reason?.NewBlock?.hash && lastHash !== $messages.data.notifications.reason.NewBlock.hash) {
+  $: isCurrentGame = $game.data?.game?.gameId === gameId;
+  $: if ($messages.data?.notifications?.reason?.NewBlock?.hash
+    && lastHash !== $messages.data.notifications.reason.NewBlock.hash
+    && isCurrentGame)
+  {
     lastHash = $messages.data.notifications.reason.NewBlock.hash;
     logs = [{ hash: lastHash, timestamp: new Date().toISOString() }, ...logs];
   }

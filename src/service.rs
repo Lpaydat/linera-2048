@@ -81,13 +81,26 @@ struct MutationRoot;
 
 #[Object]
 impl MutationRoot {
-    async fn new_game(&self, seed: Option<u16>) -> Vec<u8> {
+    async fn new_game(&self, seed: Option<u16>, subscription_id: String) -> Vec<u8> {
         let seed = seed.unwrap_or(0);
-        bcs::to_bytes(&Operation::NewGame { seed }).unwrap()
+        bcs::to_bytes(&Operation::NewGame {
+            seed,
+            subscription_id,
+        })
+        .unwrap()
     }
 
-    async fn make_move(&self, game_id: u16, direction: Direction) -> Vec<u8> {
-        let operation = Operation::MakeMove { game_id, direction };
+    async fn make_move(
+        &self,
+        game_id: u16,
+        direction: Direction,
+        subscription_id: String,
+    ) -> Vec<u8> {
+        let operation = Operation::MakeMove {
+            game_id,
+            direction,
+            subscription_id,
+        };
         bcs::to_bytes(&operation).unwrap()
     }
 }

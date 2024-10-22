@@ -28,9 +28,18 @@ impl ServiceAbi for Game2048Abi {
 
 #[derive(Debug, Deserialize, Serialize, GraphQLMutationRoot)]
 pub enum Operation {
-    NewGame { seed: u16 },
-    EndGame { game_id: u16 },
-    MakeMove { game_id: u16, direction: Direction },
+    NewGame {
+        seed: u16,
+        subscription_id: String,
+    },
+    EndGame {
+        game_id: u16,
+    },
+    MakeMove {
+        game_id: u16,
+        direction: Direction,
+        subscription_id: String,
+    },
 }
 
 #[derive(Debug, Deserialize, Serialize)]
